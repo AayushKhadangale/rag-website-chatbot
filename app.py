@@ -8,7 +8,7 @@ st.set_page_config(page_title="Website RAG Chatbot", layout="centered")
 
 st.title("🌐 Website RAG Chatbot")
 
-# ---------- CACHE HEAVY OPERATION ----------
+# ------------------ CACHED KB BUILD ------------------
 @st.cache_resource(show_spinner=True)
 def build_knowledge_base(url):
     pages = crawl_website(url)
@@ -16,29 +16,33 @@ def build_knowledge_base(url):
     index, stored_chunks = build_faiss_index(chunks)
     return index, stored_chunks
 
-# ---------- UI ----------
+# ------------------ UI ------------------
 url = st.text_input("Enter Website URL")
 
 if st.button("Crawl & Build Knowledge Base"):
     if not url:
         st.warning("Please enter a valid URL")
     else:
-        index, stored_chunks = build_knowledge_base(url)
-        st.session_state.index = index
-        st.session_state.chunks = stored_chunks
-        st.success("Knowledge base built successfully!")
+        with st.spinner("Crawling website and building knowledge base..."):
+            index, stored_chunks = build_knowledge_base(url)
+            st.session_state.index = index
+            st.session_state.chunks = stored_chunks
+            st.success("Knowledge base built successfully!")
 
 question = st.text_input("Ask a question about the website")
 
 if st.button("Ask"):
     if "index" not in st.session_state:
-        st.warning("Please crawl a website first.")
+        st.warning("Please crawl a website first")
+    elif not question:
+        st.warning("Please enter a question")
     else:
         retrieved = retrieve_chunks(
+            question,
             st.session_state.index,
-            st.session_state.chunks,
-            question
+            st.session_state.chunks
         )
         answer = generate_answer(question, "\n".join(retrieved))
+        st.write("### Answer")
         st.write(answer)
 
