@@ -1,30 +1,30 @@
+import os
 import openai
-import numpy as np
-from sentence_transformers import SentenceTransformer
 
-model = SentenceTransformer("all-MiniLM-L6-v2")
-
-def retrieve_chunks(query, index, chunks, k=3):
-    query_embedding = model.encode([query]).astype("float32")
-    distances, indices = index.search(query_embedding, k)
-    return [chunks[i] for i in indices[0]]
+# Load API key from environment (Streamlit Secrets)
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def generate_answer(question, context):
+    if not openai.api_key:
+        raise ValueError("OPENAI_API_KEY not found in environment")
+
     prompt = f"""
-Answer the question using the context below.
+Use the context below to answer the question clearly and concisely.
 
 Context:
 {context}
 
 Question:
 {question}
-
-Answer:
 """
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}]
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.2
     )
 
-    return response.choices[0].message.content
+    return response["choices"][0]["message"]["content"]
+
