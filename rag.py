@@ -1,13 +1,12 @@
-from openai import OpenAI
+import openai
 import os
+from sentence_transformers import SentenceTransformer
+import numpy as np
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 
 def retrieve_chunks(query, index, chunks, k=3):
-    import numpy as np
-    from sentence_transformers import SentenceTransformer
-
     model = SentenceTransformer("all-MiniLM-L6-v2")
     query_embedding = model.encode([query]).astype("float32")
 
@@ -26,8 +25,8 @@ Question:
 {question}
 """
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
         messages=[
             {"role": "user", "content": prompt}
         ],
