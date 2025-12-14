@@ -1,49 +1,93 @@
 import streamlit as st
+
 from crawler import crawl_website
 from preprocess import chunk_text
 from vector_store import build_faiss_index
 from rag import retrieve_chunks, generate_answer
 
-st.set_page_config(page_title="Website RAG Chatbot")
+st.set_page_config(page_title="Website RAG Chatbot", layout="centered")
 
 st.title("🌐 Website RAG Chatbot")
 
-# URL input
+
+# ================================
+# STEP 3.2 — CACHE HEAVY OPERATIONS
+# ================================
+@st.cache_resource(show_spinner=True)
+def build_knowledge_base(url):
+    pages = crawl_website(url)
+    chunks = chunk_text(pages)
+    index, stored_chunks = build_faiss_index(chunks)
+    return index, stored_chunks
+
+
+# ================================
+# UI — URL INPUT
+# ================================
 url = st.text_input("Enter Website URL")
 
-# Crawl button
 if st.button("Crawl & Build Knowledge Base"):
     if not url:
-        st.error("Please enter a valid URL")
+import streamlit as st
+
+from crawler import crawl_website
+from preprocess import chunk_text
+from vector_store import build_faiss_index
+from rag import retrieve_chunks, generate_answer
+
+st.set_page_config(page_title="Website RAG Chatbot", layout="centered")
+
+st.title("🌐 Website RAG Chatbot")
+
+
+# ================================
+# STEP 3.2 — CACHE HEAVY OPERATIONS
+# ================================
+@st.cache_resource(show_spinner=True)
+def build_knowledge_base(url):
+    pages = crawl_website(url)
+    chunks = chunk_text(pages)
+    index, stored_chunks = build_faiss_index(chunks)
+    return index, stored_chunks
+
+
+# ================================
+# UI — URL INPUT
+# ================================
+url = st.text_input("Enter Website URL")
+
+if st.button("Crawl & Build Knowledge Base"):
+    if not url:
+        st.warning("Please enter a valid URL")
     else:
         with st.spinner("Crawling website and building knowledge base..."):
-            pages = crawl_website(url)
-            full_text = " ".join(pages)
+            index, stored_chunks = build_knowledge_base(url)
 
-            chunks = chunk_text(full_text)
-
-            # ✅ FIXED LINE (ONLY 2 VALUES)
-            index, stored_chunks = build_faiss_index(chunks)
-
-            # ✅ STORE IN SESSION STATE
             st.session_state.index = index
             st.session_state.chunks = stored_chunks
 
-        st.success("Knowledge Base Built Successfully!")
+        st.success("Knowledge base built successfully!")
 
-# Question input
-question = st.text_input("Ask a question about the website")
 
-if st.button("Ask"):
-    if "index" not in st.session_state or "chunks" not in st.session_state:
-        st.error("Please crawl a website first.")
-    else:
-        retrieved_chunks = retrieve_chunks(
-            question,
-            st.session_state.index,
-            st.session_state.chunks
-        )
+# ================================
+# QUESTION ANSWERING
+# ================================
+if "index" in st.session_state and "chunks" in st.session_state:
+    question = st.text_input("Ask a question about the website")
 
-        answer = generate_answer(question, "\n".join(retrieved_chunks))
+    if st.button("Ask"):
+        with st.spinner("Thinking..."):
+            retrieved_chunks = retrieve_chunks(
+                question,
+                st.session_state.index,
+                st.session_state.chunks
+            )
+
+            answer = generate_answer(
+                question,
+                "\n".join(retrieved_chunks)
+            )
+
+        st.markdown("### ✅ Answer")
         st.write(answer)
 
