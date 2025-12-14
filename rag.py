@@ -1,16 +1,16 @@
 import os
-from openai import OpenAI
+import openai
 import numpy as np
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 def retrieve_chunks(query, index, chunks, k=3):
-    query_embedding = client.embeddings.create(
-        model="text-embedding-3-small",
+    embedding = openai.Embedding.create(
+        model="text-embedding-ada-002",
         input=query
-    ).data[0].embedding
+    )["data"][0]["embedding"]
 
-    query_vector = np.array([query_embedding]).astype("float32")
+    query_vector = np.array([embedding]).astype("float32")
     distances, indices = index.search(query_vector, k)
 
     return [chunks[i] for i in indices[0]]
@@ -26,12 +26,13 @@ Question:
 {question}
 """
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
         messages=[
             {"role": "user", "content": prompt}
-        ]
+        ],
+        temperature=0.2
     )
 
-    return response.choices[0].message.content
+    return response["choices"][0]["message"]["content"]
 
