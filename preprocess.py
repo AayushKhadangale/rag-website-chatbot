@@ -1,16 +1,10 @@
-def chunk_text(pages, chunk_size=500, overlap=100):
-    """
-    pages: list[str] returned by crawler
-    """
-    text = "\n".join(pages)   # 🔑 FIX: join list into string
-
+def chunk_text(text, chunk_size=500, overlap=100):
     words = text.split()
     chunks = []
 
     for i in range(0, len(words), chunk_size - overlap):
         chunk = " ".join(words[i:i + chunk_size])
-        if chunk.strip():
-            chunks.append(chunk)
+        chunks.append(chunk)
 
     return chunks
 

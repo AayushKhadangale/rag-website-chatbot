@@ -5,18 +5,24 @@ from vector_store import build_faiss_index
 from rag import retrieve_chunks, generate_answer
 
 st.set_page_config(page_title="Website RAG Chatbot", layout="centered")
-
 st.title("🌐 Website RAG Chatbot")
 
-# ------------------ CACHED KB BUILD ------------------
 @st.cache_resource(show_spinner=True)
 def build_knowledge_base(url):
     pages = crawl_website(url)
-    chunks = chunk_text(pages)
+
+    if not pages:
+        raise ValueError("No pages were crawled")
+
+    full_text = "\n\n".join(pages)   # 🔥 CRITICAL FIX
+    chunks = chunk_text(full_text)
+
+    if not chunks:
+        raise ValueError("No chunks created")
+
     index, stored_chunks = build_faiss_index(chunks)
     return index, stored_chunks
 
-# ------------------ UI ------------------
 url = st.text_input("Enter Website URL")
 
 if st.button("Crawl & Build Knowledge Base"):
@@ -29,20 +35,15 @@ if st.button("Crawl & Build Knowledge Base"):
             st.session_state.chunks = stored_chunks
             st.success("Knowledge base built successfully!")
 
-question = st.text_input("Ask a question about the website")
+if "index" in st.session_state:
+    question = st.text_input("Ask a question about the website")
 
-if st.button("Ask"):
-    if "index" not in st.session_state:
-        st.warning("Please crawl a website first")
-    elif not question:
-        st.warning("Please enter a question")
-    else:
+    if st.button("Ask"):
         retrieved = retrieve_chunks(
             question,
             st.session_state.index,
             st.session_state.chunks
         )
         answer = generate_answer(question, "\n".join(retrieved))
-        st.write("### Answer")
         st.write(answer)
 

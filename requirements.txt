@@ -3,6 +3,6 @@ requests
 beautifulsoup4
 faiss-cpu
 sentence-transformers
-openai==0.28.1
+openai
 numpy
 
