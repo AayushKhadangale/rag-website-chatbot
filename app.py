@@ -5,14 +5,18 @@ from preprocess import chunk_text
 from vector_store import build_faiss_index
 from rag import retrieve_chunks, generate_answer
 
+
+# -------------------------
+# Streamlit Page Config
+# -------------------------
 st.set_page_config(page_title="Website RAG Chatbot", layout="centered")
 
 st.title("🌐 Website RAG Chatbot")
 
 
-# ================================
-# STEP 3.2 — CACHE HEAVY OPERATIONS
-# ================================
+# -------------------------
+# STEP 3.2 — CACHE HEAVY OPS
+# -------------------------
 @st.cache_resource(show_spinner=True)
 def build_knowledge_base(url):
     pages = crawl_website(url)
@@ -21,41 +25,15 @@ def build_knowledge_base(url):
     return index, stored_chunks
 
 
-# ================================
-# UI — URL INPUT
-# ================================
+# -------------------------
+# URL INPUT
+# -------------------------
 url = st.text_input("Enter Website URL")
 
-if st.button("Crawl & Build Knowledge Base"):
-    if not url:
-import streamlit as st
 
-from crawler import crawl_website
-from preprocess import chunk_text
-from vector_store import build_faiss_index
-from rag import retrieve_chunks, generate_answer
-
-st.set_page_config(page_title="Website RAG Chatbot", layout="centered")
-
-st.title("🌐 Website RAG Chatbot")
-
-
-# ================================
-# STEP 3.2 — CACHE HEAVY OPERATIONS
-# ================================
-@st.cache_resource(show_spinner=True)
-def build_knowledge_base(url):
-    pages = crawl_website(url)
-    chunks = chunk_text(pages)
-    index, stored_chunks = build_faiss_index(chunks)
-    return index, stored_chunks
-
-
-# ================================
-# UI — URL INPUT
-# ================================
-url = st.text_input("Enter Website URL")
-
+# -------------------------
+# BUILD KB BUTTON
+# -------------------------
 if st.button("Crawl & Build Knowledge Base"):
     if not url:
         st.warning("Please enter a valid URL")
@@ -69,9 +47,9 @@ if st.button("Crawl & Build Knowledge Base"):
         st.success("Knowledge base built successfully!")
 
 
-# ================================
+# -------------------------
 # QUESTION ANSWERING
-# ================================
+# -------------------------
 if "index" in st.session_state and "chunks" in st.session_state:
     question = st.text_input("Ask a question about the website")
 
