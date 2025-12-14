@@ -2,46 +2,34 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 
-def clean_html(html):
-    soup = BeautifulSoup(html, "html.parser")
-
-    for tag in soup(["script", "style", "img", "noscript", "iframe"]):
-        tag.decompose()
-
-    title = soup.title.text.strip() if soup.title else ""
-    headings = " ".join(h.get_text(strip=True) for h in soup.find_all(["h1", "h2", "h3"]))
-    text = soup.get_text(separator=" ", strip=True)
-
-    return f"{title}\n{headings}\n{text}"
-
-def crawl_website(start_url, max_depth=2):
+def crawl_website(start_url, max_depth=1):
     visited = set()
+    queue = [(start_url, 0)]
     pages = []
 
     base_domain = urlparse(start_url).netloc
-    queue = [(start_url, 0)]
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (compatible; RAGBot/1.0)"
-    }
 
     while queue:
         url, depth = queue.pop(0)
-
         if url in visited or depth > max_depth:
             continue
 
         visited.add(url)
 
         try:
-            response = requests.get(url, headers=headers, timeout=10)
-            if "text/html" not in response.headers.get("Content-Type", ""):
+            res = requests.get(url, timeout=10)
+            if "text/html" not in res.headers.get("Content-Type", ""):
                 continue
 
-            html = response.text
-            pages.append(clean_html(html))
+            soup = BeautifulSoup(res.text, "html.parser")
 
-            soup = BeautifulSoup(html, "html.parser")
+            for tag in soup(["script", "style", "noscript", "img"]):
+                tag.decompose()
+
+            text = soup.get_text(separator=" ", strip=True)
+            if text:
+                pages.append(text)
+
             for link in soup.find_all("a", href=True):
                 next_url = urljoin(url, link["href"])
                 if urlparse(next_url).netloc == base_domain:
