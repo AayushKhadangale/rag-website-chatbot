@@ -8,30 +8,42 @@ st.set_page_config(page_title="Website RAG Chatbot")
 
 st.title("🌐 Website RAG Chatbot")
 
+# URL input
 url = st.text_input("Enter Website URL")
 
+# Crawl button
 if st.button("Crawl & Build Knowledge Base"):
-    with st.spinner("Crawling website..."):
-        pages = crawl_website(url)
-        full_text = " ".join(pages)
-        chunks = chunk_text(full_text)
-        index, embeddings, stored_chunks = build_faiss_index(chunks)
+    if not url:
+        st.error("Please enter a valid URL")
+    else:
+        with st.spinner("Crawling website and building knowledge base..."):
+            pages = crawl_website(url)
+            full_text = " ".join(pages)
 
-        st.session_state.index = index
-        st.session_state.chunks = stored_chunks
+            chunks = chunk_text(full_text)
 
-    st.success("Knowledge Base Ready!")
+            # ✅ FIXED LINE (ONLY 2 VALUES)
+            index, stored_chunks = build_faiss_index(chunks)
 
+            # ✅ STORE IN SESSION STATE
+            st.session_state.index = index
+            st.session_state.chunks = stored_chunks
+
+        st.success("Knowledge Base Built Successfully!")
+
+# Question input
 question = st.text_input("Ask a question about the website")
 
 if st.button("Ask"):
-    if "index" not in st.session_state:
+    if "index" not in st.session_state or "chunks" not in st.session_state:
         st.error("Please crawl a website first.")
     else:
-        retrieved = retrieve_chunks(
+        retrieved_chunks = retrieve_chunks(
             question,
             st.session_state.index,
             st.session_state.chunks
         )
-        answer = generate_answer(question, "\n".join(retrieved))
+
+        answer = generate_answer(question, "\n".join(retrieved_chunks))
         st.write(answer)
+
