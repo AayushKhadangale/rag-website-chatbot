@@ -2,17 +2,22 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 
+
 def clean_html(html):
     soup = BeautifulSoup(html, "html.parser")
 
+    # Remove unwanted tags
     for tag in soup(["script", "style", "img", "noscript", "iframe"]):
         tag.decompose()
 
-    title = soup.title.text if soup.title else ""
-    headings = " ".join(h.get_text() for h in soup.find_all(["h1", "h2", "h3"]))
-    text = soup.get_text(separator=" ")
+    title = soup.title.get_text(strip=True) if soup.title else ""
+    headings = " ".join(
+        h.get_text(strip=True) for h in soup.find_all(["h1", "h2", "h3"])
+    )
+    text = soup.get_text(separator=" ", strip=True)
 
     return f"{title}\n{headings}\n{text}"
+
 
 def crawl_website(start_url, max_depth=2):
     visited = set()
@@ -31,11 +36,14 @@ def crawl_website(start_url, max_depth=2):
 
         try:
             response = requests.get(url, timeout=10)
-            if "text/html" not in response.headers.get("Content-Type", ""):
+            content_type = response.headers.get("Content-Type", "")
+
+            if "text/html" not in content_type:
                 continue
 
             html = response.text
-            data.append(clean_html(html))
+            cleaned_text = clean_html(html)
+            data.append(cleaned_text)
 
             soup = BeautifulSoup(html, "html.parser")
             for link in soup.find_all("a", href=True):
@@ -47,3 +55,4 @@ def crawl_website(start_url, max_depth=2):
             continue
 
     return data
+
