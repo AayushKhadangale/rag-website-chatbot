@@ -1,5 +1,5 @@
-from openai import OpenAI
 import os
+from openai import OpenAI
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
@@ -14,14 +14,20 @@ def retrieve_chunks(query, index, chunks, k=5):
     return [chunks[i] for i in I[0]]
 
 def generate_answer(question, context):
+    prompt = f"""
+Answer the question using the context below.
+
+Context:
+{context}
+
+Question:
+{question}
+"""
+
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "Answer using only the provided context."},
-            {"role": "user", "content": f"Context:\n{context}\n\nQuestion:\n{question}"}
-        ],
+        messages=[{"role": "user", "content": prompt}],
         temperature=0.2
     )
 
     return response.choices[0].message.content
-

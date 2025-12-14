@@ -8,7 +8,7 @@ def clean_html(html):
     for tag in soup(["script", "style", "img", "noscript", "iframe"]):
         tag.decompose()
 
-    title = soup.title.get_text(strip=True) if soup.title else ""
+    title = soup.title.text.strip() if soup.title else ""
     headings = " ".join(h.get_text(strip=True) for h in soup.find_all(["h1", "h2", "h3"]))
     text = soup.get_text(separator=" ", strip=True)
 
@@ -21,6 +21,10 @@ def crawl_website(start_url, max_depth=2):
     base_domain = urlparse(start_url).netloc
     queue = [(start_url, 0)]
 
+    headers = {
+        "User-Agent": "Mozilla/5.0 (compatible; RAGBot/1.0)"
+    }
+
     while queue:
         url, depth = queue.pop(0)
 
@@ -30,7 +34,7 @@ def crawl_website(start_url, max_depth=2):
         visited.add(url)
 
         try:
-            response = requests.get(url, timeout=10)
+            response = requests.get(url, headers=headers, timeout=10)
             if "text/html" not in response.headers.get("Content-Type", ""):
                 continue
 
@@ -47,4 +51,3 @@ def crawl_website(start_url, max_depth=2):
             continue
 
     return pages
-

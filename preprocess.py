@@ -7,4 +7,3 @@ def chunk_text(text, chunk_size=500, overlap=100):
         chunks.append(chunk)
 
     return chunks
-
