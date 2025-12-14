@@ -7,3 +7,14 @@ def chunk_text(text, chunk_size=500, overlap=100):
         chunks.append(chunk)
 
     return chunks
+
+
+def chunk_pages(pages):
+    all_chunks = []
+
+    for page in pages:
+        page_chunks = chunk_text(page)
+        all_chunks.extend(page_chunks)
+
+    return all_chunks
+
