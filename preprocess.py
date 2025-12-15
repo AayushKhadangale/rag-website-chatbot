@@ -1,9 +1,8 @@
-def chunk_text(text, chunk_size=500, overlap=100):
-    words = text.split()
-    chunks = []
-
-    for i in range(0, len(words), chunk_size - overlap):
-        chunk = " ".join(words[i:i + chunk_size])
-        chunks.append(chunk)
-
-    return chunks
+def chunk_text(text, chunk_size=400, overlap=50):
+   words = text.split()
+   chunks = []
+   for i in range(0, len(words), chunk_size - overlap):
+       chunk = " ".join(words[i:i + chunk_size])
+       if len(chunk.strip()) > 50:
+           chunks.append(chunk)
+   return chunks
